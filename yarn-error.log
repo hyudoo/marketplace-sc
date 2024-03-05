@@ -1,0 +1,45 @@
+Arguments: 
+  C:\Program Files\nodejs\node.exe C:\Program Files\nodejs\node_modules\yarn\bin\yarn.js install
+
+PATH: 
+  C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR;C:\Program Files\dotnet\;C:\Users\Admin\AppData\Roaming\nvm;C:\Program Files\nodejs;C:\Program Files\Git\cmd;C:\Program Files\Docker\Docker\resources\bin;E:\java\bin;E:\ngrok;E:\kibana\kibana-8.11.1\bin;E:\kibana\elasticsearch-8.11.1-windows-x86_64\elasticsearch-8.11.1\bin;C:\Program Files\Amazon\AWSCLIV2\;E:\apache-maven-3.9.5-bin\apache-maven-3.9.5\bin;E:\mc;C:\Users\Admin\AppData\Local\Programs\Python\Python311\Scripts\;C:\Users\Admin\AppData\Local\Programs\Python\Python311\;C:\Users\Admin\AppData\Local\Microsoft\WindowsApps;E:\Microsoft VS Code\bin;C:\Users\Admin\AppData\Roaming\nvm;C:\Program Files\nodejs;C:\Users\Admin\AppData\Local\GitHubDesktop\bin;E:\ngrok;E:\kibana\kibana-8.11.1\bin;E:\kibana\elasticsearch-8.11.1-windows-x86_64\elasticsearch-8.11.1\bin;E:\pycharm\PyCharm 2023.2.5\bin;;E:\pycharm\PyCharm Community Edition 2023.2.5\bin;;C:\Users\Admin\AppData\Local\Android\Sdk\platform-tools;
+
+Yarn version: 
+  1.22.19
+
+Node version: 
+  18.17.1
+
+Platform: 
+  win32 x64
+
+Trace: 
+  Error: EPERM: operation not permitted, unlink 'E:\workspace\supply-chain-management-sc\node_modules\keccak\prebuilds\win32-x64\node.napi.node'
+
+npm manifest: 
+  {
+    "name": "supply-chain-management-sc",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+      "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+      "hardhat": "^2.20.1"
+    },
+    "dependencies": {
+      "@openzeppelin/contracts": "^5.0.2",
+      "dotenv": "^16.3.1"
+    }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
