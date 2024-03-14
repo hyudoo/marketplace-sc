@@ -1,71 +1,80 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.0;
+//SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.24;
 
-contract SupplyChain {
-    struct Product {
-        uint256 id;
-        string name;
-        string image;
-        address manufacturer;
-        address[] transitHistory;
-        address owner;
-        bool isDelivered;
+import "@openzeppelin/contracts/utils/Context.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import "@openzeppelin/contracts/access/extensions/AccessControlEnumerable.sol";
+
+interface ISupplyChain {
+    function mint(address to, uint256 productType) external returns (uint256);
+}
+
+contract SupplyChain is
+    ERC721Enumerable,
+    Ownable,
+    AccessControlEnumerable,
+    ISupplyChain
+{
+    uint private _productIdTracker = 0;
+    string private _url;
+    bytes32 public constant CREATER_ROLE = keccak256("CREATER_ROLE");
+
+    event Mint(address _to, uint256 _productType, uint256 _tokenid);
+
+    constructor() ERC721("SupplyChain", "SCN") Ownable(msg.sender) {
+        _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 
-    mapping(uint256 => Product) public products;
-    uint256 public productCount = 0;
-
-    event ProductCreated(
-        uint256 id,
-        string name,
-        string image,
-        address manufacturer
-    );
-    event ProductTransferred(uint256 id, address from, address to);
-    event ProductDelivered(uint256 id, address owner);
-
-    function createProduct(string memory _name, string memory _image) public {
-        productCount++;
-        products[productCount] = Product(
-            productCount,
-            _name,
-            _image,
-            msg.sender,
-            new address[](0),
-            msg.sender,
-            false
+    function mint(
+        address to,
+        uint256 productType
+    ) external override returns (uint256) {
+        require(
+            owner() == _msgSender() || hasRole(CREATER_ROLE, _msgSender()),
+            "SupplyChain: must have minter role to mint"
         );
-        emit ProductCreated(productCount, _name, _image, msg.sender);
+        _productIdTracker += 1;
+        uint256 productId = _productIdTracker;
+        _mint(to, productId);
+        emit Mint(to, productType, productId);
+        return productId;
     }
 
-    function transferProduct(uint256 _id, address _to) public {
-        require(products[_id].id > 0, "Product does not exist");
-        require(
-            products[_id].owner == msg.sender,
-            "You are not the owner of this product"
-        );
-        require(
-            products[_id].isDelivered == false,
-            "Product has already been delivered"
-        );
+    function listProductIds(
+        address owner
+    ) external view returns (uint256[] memory tokenIds) {
+        uint256 balance = balanceOf(owner);
+        uint256[] memory ids = new uint256[](balance);
 
-        products[_id].transitHistory.push(_to);
-        emit ProductTransferred(_id, msg.sender, _to);
+        for (uint256 i = 0; i < balance; i++) {
+            ids[i] = tokenOfOwnerByIndex(owner, i);
+        }
+
+        return (ids);
     }
 
-    function deliverProduct(uint256 _id) public {
-        require(products[_id].id != 0, "Product does not exist");
-        require(
-            products[_id].owner != msg.sender,
-            "You are not the owner of this product"
-        );
-        require(
-            products[_id].isDelivered == false,
-            "Product has already been delivered"
-        );
+    function _baseURI()
+        internal
+        view
+        override
+        returns (string memory _newBaseURI)
+    {
+        return _url;
+    }
 
-        products[_id].owner = msg.sender;
-        products[_id].isDelivered = true;
-        emit ProductDelivered(_id, msg.sender);
+    function setBaseURI(string memory _newBaseURI) external onlyOwner {
+        _url = _newBaseURI;
+    }
+
+    function supportsInterface(
+        bytes4 interfaceId
+    )
+        public
+        view
+        override(ERC721Enumerable, AccessControlEnumerable)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
     }
 }

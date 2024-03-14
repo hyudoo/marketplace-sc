@@ -4,16 +4,19 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/access/extensions/AccessControlEnumerable.sol";
 
-contract Vault is Ownable, AccessControl {
+contract Vault is Ownable, AccessControlEnumerable {
     IERC20 private token;
     uint256 public maxWithdrawAmount;
     bool public withdrawEnable;
     bytes32 public constant WITHDRAWER_ROLE = keccak256("WITHDRAWER_ROLE");
 
-    constructor() Ownable(msg.sender) {
+    constructor(IERC20 _token) Ownable(msg.sender) {
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
+        setToken(_token);
+        setWithdrawEnable(true);
+        setMaxWithdrawAmount(10 ** 24);
     }
 
     function setWithdrawEnable(bool _isEnable) public onlyOwner {
