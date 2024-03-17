@@ -7,7 +7,11 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/extensions/AccessControlEnumerable.sol";
 
 interface ISupplyChain {
-    function mint(address to, uint256 productType) external returns (uint256);
+    function mint(
+        address to,
+        string memory cid,
+        uint256 productType
+    ) external returns (uint256);
 }
 
 contract SupplyChain is
@@ -22,12 +26,18 @@ contract SupplyChain is
 
     event Mint(address _to, uint256 _productType, uint256 _tokenid);
 
+    struct ProductData {
+        string cid;
+    }
+    mapping(uint256 => ProductData) private productData;
+
     constructor() ERC721("SupplyChain", "SCN") Ownable(msg.sender) {
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 
     function mint(
         address to,
+        string memory cid,
         uint256 productType
     ) external override returns (uint256) {
         require(
@@ -36,9 +46,14 @@ contract SupplyChain is
         );
         _productIdTracker += 1;
         uint256 productId = _productIdTracker;
+        productData[productId] = ProductData(cid);
         _mint(to, productId);
         emit Mint(to, productType, productId);
         return productId;
+    }
+
+    function getCID(uint256 productId) external view returns (string memory) {
+        return productData[productId].cid;
     }
 
     function listProductIds(
