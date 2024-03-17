@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
+import "./Delivery.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
@@ -22,14 +23,16 @@ contract SupplyChain is
 {
     uint private _productIdTracker = 0;
     string private _url;
-    bytes32 public constant CREATER_ROLE = keccak256("CREATER_ROLE");
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     event Mint(address _to, uint256 _productType, uint256 _tokenid);
 
     struct ProductData {
         string cid;
     }
+
     mapping(uint256 => ProductData) private productData;
+    mapping(string => address[]) private transitHistory;
 
     constructor() ERC721("SupplyChain", "SCN") Ownable(msg.sender) {
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
@@ -41,11 +44,12 @@ contract SupplyChain is
         uint256 productType
     ) external override returns (uint256) {
         require(
-            owner() == _msgSender() || hasRole(CREATER_ROLE, _msgSender()),
-            "SupplyChain: must have minter role to mint"
+            owner() == _msgSender() || hasRole(MINTER_ROLE, _msgSender()),
+            "SupplyChain: must have MINTER_ROLE role to create"
         );
         _productIdTracker += 1;
         uint256 productId = _productIdTracker;
+        transitHistory[cid].push(to);
         productData[productId] = ProductData(cid);
         _mint(to, productId);
         emit Mint(to, productType, productId);
@@ -54,6 +58,15 @@ contract SupplyChain is
 
     function getCID(uint256 productId) external view returns (string memory) {
         return productData[productId].cid;
+    }
+
+    function setCID(uint256 productId, string memory cid) external {
+        require(
+            ownerOf(productId) == _msgSender() ||
+                hasRole(MINTER_ROLE, _msgSender()),
+            "SupplyChain: must have MINTER_ROLE role to create"
+        );
+        productData[productId].cid = cid;
     }
 
     function listProductIds(
