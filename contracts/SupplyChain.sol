@@ -1,7 +1,6 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
-import "./Delivery.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
@@ -11,7 +10,7 @@ interface ISupplyChain {
     function mint(
         address to,
         string memory cid,
-        uint256 productType
+        string memory productType
     ) external returns (uint256);
 }
 
@@ -21,18 +20,19 @@ contract SupplyChain is
     AccessControlEnumerable,
     ISupplyChain
 {
+    // declare variables to store product data and delivery data
     uint private _productIdTracker = 0;
     string private _url;
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
-    event Mint(address _to, uint256 _productType, uint256 _tokenid);
+    event Mint(address _to, string _productType, uint256 _tokenid);
 
     struct ProductData {
         string cid;
     }
-
+    // declare mapping to store product data and delivery data
     mapping(uint256 => ProductData) private productData;
-    mapping(string => address[]) private transitHistory;
+    mapping(uint256 => address[]) private transitHistory;
 
     constructor() ERC721("SupplyChain", "SCN") Ownable(msg.sender) {
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
@@ -41,7 +41,7 @@ contract SupplyChain is
     function mint(
         address to,
         string memory cid,
-        uint256 productType
+        string memory productType
     ) external override returns (uint256) {
         require(
             owner() == _msgSender() || hasRole(MINTER_ROLE, _msgSender()),
@@ -49,7 +49,7 @@ contract SupplyChain is
         );
         _productIdTracker += 1;
         uint256 productId = _productIdTracker;
-        transitHistory[cid].push(to);
+        transitHistory[productId].push(to);
         productData[productId] = ProductData(cid);
         _mint(to, productId);
         emit Mint(to, productType, productId);
@@ -82,6 +82,20 @@ contract SupplyChain is
         return (ids);
     }
 
+    function addMinter(address minter) external onlyOwner {
+        grantRole(MINTER_ROLE, minter);
+    }
+
+    function removeMinter(address minter) external onlyOwner {
+        revokeRole(MINTER_ROLE, minter);
+    }
+
+    function getTransitHistory(
+        uint256 productId
+    ) external view returns (address[] memory) {
+        return transitHistory[productId];
+    }
+
     function _baseURI()
         internal
         view
@@ -93,6 +107,12 @@ contract SupplyChain is
 
     function setBaseURI(string memory _newBaseURI) external onlyOwner {
         _url = _newBaseURI;
+    }
+
+    function getProductURI(
+        uint256 productId
+    ) external view returns (string memory) {
+        return string(abi.encodePacked(_baseURI(), productData[productId].cid));
     }
 
     function supportsInterface(

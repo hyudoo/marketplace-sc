@@ -43,18 +43,6 @@ contract MarketPlace is IERC721Receiver, Ownable {
         token = _token;
     }
 
-    function onERC721Received(
-        address,
-        address,
-        uint256,
-        bytes calldata
-    ) external pure override returns (bytes4) {
-        return
-            bytes4(
-                keccak256("onERC721Received(address,address,uint256,bytes)")
-            );
-    }
-
     function getListedProduct() public view returns (ProductDetail[] memory) {
         uint balance = product.balanceOf(address(this));
         ProductDetail[] memory myProduct = new ProductDetail[](balance);
@@ -171,5 +159,17 @@ contract MarketPlace is IERC721Receiver, Ownable {
 
     function withdrawErc20() public onlyOwner {
         token.transfer(msg.sender, token.balanceOf(address(this)));
+    }
+
+    function onERC721Received(
+        address,
+        address,
+        uint256,
+        bytes calldata
+    ) external pure override returns (bytes4) {
+        return
+            bytes4(
+                keccak256("onERC721Received(address,address,uint256,bytes)")
+            );
     }
 }
