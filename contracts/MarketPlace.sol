@@ -79,6 +79,7 @@ contract MarketPlace is IERC721Receiver, Ownable {
         );
 
         product.safeTransferFrom(msg.sender, address(this), _productId);
+        product.addTransitHistory(_productId, msg.sender);
         emit ListProduct(msg.sender, _productId, _price);
     }
 
@@ -113,28 +114,33 @@ contract MarketPlace is IERC721Receiver, Ownable {
         emit UnlistProduct(msg.sender, _productId);
     }
 
-    function buyProduct(uint256 _productId, uint256 _price) public {
+    function buyProduct(uint256 _productId) public {
         require(
-            token.balanceOf(msg.sender) >= _price,
+            token.balanceOf(msg.sender) >= listProductDetail[_productId].price,
             "Insufficient account balance"
         );
         require(
             product.ownerOf(_productId) == address(this),
             "This Product doesn't exist on marketplace"
         );
-        require(
-            listProductDetail[_productId].price <= _price,
-            "Minimum price has not been reached"
-        );
 
-        SafeERC20.safeTransferFrom(token, msg.sender, address(this), _price);
+        SafeERC20.safeTransferFrom(
+            token,
+            msg.sender,
+            address(this),
+            listProductDetail[_productId].price
+        );
         token.transfer(
             listProductDetail[_productId].author,
-            (_price * (100 - tax)) / 100
+            (listProductDetail[_productId].price * (100 - tax)) / 100
         );
 
-        product.customTransferFrom(address(this), msg.sender, _productId);
-        emit BuyProduct(msg.sender, _productId, _price);
+        product.safeTransferFrom(address(this), msg.sender, _productId);
+        emit BuyProduct(
+            msg.sender,
+            _productId,
+            listProductDetail[_productId].price
+        );
     }
 
     function setTax(uint256 _tax) public onlyOwner {

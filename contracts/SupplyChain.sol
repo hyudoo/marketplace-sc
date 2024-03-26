@@ -37,6 +37,7 @@ contract SupplyChain is
 
     constructor() ERC721("SupplyChain", "SCN") Ownable(msg.sender) {
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
+        _grantRole(MINTER_ROLE, _msgSender());
     }
 
     function mint(
@@ -83,18 +84,23 @@ contract SupplyChain is
         return (ids);
     }
 
-    function addMinter(address minter) external onlyOwner {
-        grantRole(MINTER_ROLE, minter);
-    }
-
-    function removeMinter(address minter) external onlyOwner {
-        revokeRole(MINTER_ROLE, minter);
-    }
-
     function getTransitHistory(
         uint256 productId
     ) external view returns (address[] memory) {
         return transitHistory[productId];
+    }
+
+    function addTransitHistory(uint256 productId, address to) external {
+        require(
+            ownerOf(productId) == _msgSender() ||
+                hasRole(MINTER_ROLE, _msgSender()),
+            "SupplyChain: must have MINTER_ROLE role to create"
+        );
+        transitHistory[productId].push(to);
+    }
+
+    function hasMinterRole(address _user) public view returns (bool) {
+        return hasRole(MINTER_ROLE, _user);
     }
 
     function _baseURI()
@@ -116,15 +122,6 @@ contract SupplyChain is
         return string(abi.encodePacked(_baseURI(), productData[productId].cid));
     }
 
-    function customTransferFrom(
-        address from,
-        address to,
-        uint256 productId
-    ) public virtual {
-        this.safeTransferFrom(from, to, productId);
-        transitHistory[productId].push(to);
-    }
-
     function supportsInterface(
         bytes4 interfaceId
     )
@@ -134,5 +131,13 @@ contract SupplyChain is
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
+    }
+
+    function addMinter(address minter) external onlyOwner {
+        grantRole(MINTER_ROLE, minter);
+    }
+
+    function removeMinter(address minter) external onlyOwner {
+        revokeRole(MINTER_ROLE, minter);
     }
 }
