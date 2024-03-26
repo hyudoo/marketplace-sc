@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/extensions/AccessControlEnumerable.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 interface ISupplyChain {
     function mint(
@@ -113,6 +114,15 @@ contract SupplyChain is
         uint256 productId
     ) external view returns (string memory) {
         return string(abi.encodePacked(_baseURI(), productData[productId].cid));
+    }
+
+    function customTransferFrom(
+        address from,
+        address to,
+        uint256 productId
+    ) public virtual {
+        this.safeTransferFrom(from, to, productId);
+        transitHistory[productId].push(to);
     }
 
     function supportsInterface(

@@ -6,44 +6,45 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "./SupplyChain.sol";
 
 contract MarketPlace is IERC721Receiver, Ownable {
     using SafeERC20 for IERC20;
-    IERC721Enumerable private product;
+    SupplyChain private product;
     IERC20 private token;
 
     struct ProductDetail {
-        address payable seller;
+        address payable author;
         uint256 productId;
         uint256 price;
     }
 
     event ListProduct(
-        address indexed _seller,
+        address indexed _author,
         uint256 _productId,
         uint256 _price
     );
 
-    event UnlistProduct(address indexed _seller, uint256 _productId);
+    event UnlistProduct(address indexed _author, uint256 _productId);
     event BuyProduct(
-        address indexed _seller,
+        address indexed _author,
         uint256 _productId,
         uint256 _price
     );
     event UpdateListingProductPrice(uint256 _productId, uint256 _price);
     event SetToken(IERC20 _token);
     event SetTax(uint256 _tax);
-    event SetProduct(IERC721Enumerable _product);
+    event SetProduct(SupplyChain _product);
 
     uint256 private tax = 5; // percentage
     mapping(uint256 => ProductDetail) listProductDetail;
 
-    constructor(IERC20 _token, IERC721Enumerable _product) Ownable(msg.sender) {
+    constructor(IERC20 _token, SupplyChain _product) Ownable(msg.sender) {
         product = _product;
         token = _token;
     }
 
-    function getListedProduct() public view returns (ProductDetail[] memory) {
+    function getListedProducts() public view returns (ProductDetail[] memory) {
         uint balance = product.balanceOf(address(this));
         ProductDetail[] memory myProduct = new ProductDetail[](balance);
 
@@ -53,6 +54,12 @@ contract MarketPlace is IERC721Receiver, Ownable {
             ];
         }
         return myProduct;
+    }
+
+    function getListedProductByID(
+        uint256 _productId
+    ) public view returns (ProductDetail memory) {
+        return listProductDetail[_productId];
     }
 
     function listProduct(uint256 _productId, uint256 _price) public {
@@ -67,8 +74,8 @@ contract MarketPlace is IERC721Receiver, Ownable {
 
         listProductDetail[_productId] = ProductDetail(
             payable(msg.sender),
-            _price,
-            _productId
+            _productId,
+            _price
         );
 
         product.safeTransferFrom(msg.sender, address(this), _productId);
@@ -84,7 +91,7 @@ contract MarketPlace is IERC721Receiver, Ownable {
             "This Product doesn't exist on marketplace"
         );
         require(
-            listProductDetail[_productId].seller == msg.sender,
+            listProductDetail[_productId].author == msg.sender,
             "Only owner can update price of this Product"
         );
 
@@ -98,7 +105,7 @@ contract MarketPlace is IERC721Receiver, Ownable {
             "This Product doesn't exist on marketplace"
         );
         require(
-            listProductDetail[_productId].seller == msg.sender,
+            listProductDetail[_productId].author == msg.sender,
             "Only owner can unlist this Product"
         );
 
@@ -122,11 +129,11 @@ contract MarketPlace is IERC721Receiver, Ownable {
 
         SafeERC20.safeTransferFrom(token, msg.sender, address(this), _price);
         token.transfer(
-            listProductDetail[_productId].seller,
+            listProductDetail[_productId].author,
             (_price * (100 - tax)) / 100
         );
 
-        product.safeTransferFrom(address(this), msg.sender, _productId);
+        product.customTransferFrom(address(this), msg.sender, _productId);
         emit BuyProduct(msg.sender, _productId, _price);
     }
 
@@ -140,7 +147,7 @@ contract MarketPlace is IERC721Receiver, Ownable {
         emit SetToken(_token);
     }
 
-    function setProduct(IERC721Enumerable _product) public onlyOwner {
+    function setProduct(SupplyChain _product) public onlyOwner {
         product = _product;
         emit SetProduct(_product);
     }
