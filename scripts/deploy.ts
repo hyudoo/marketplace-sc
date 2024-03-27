@@ -21,18 +21,18 @@ async function main() {
   // console.log("CrowdSale address: ", crowdSale.target);
   // Config.setConfig(network + ".CrowdSale", crowdSale.target as string);
 
-  const SupplyChain = await ethers.getContractFactory("SupplyChain");
-  const supplyChain = await SupplyChain.deploy();
-  console.log("SupplyChain address: ", supplyChain.target);
-  Config.setConfig(network + ".SupplyChain", supplyChain.target as string);
+  // const SupplyChain = await ethers.getContractFactory("SupplyChain");
+  // const supplyChain = await SupplyChain.deploy();
+  // console.log("SupplyChain address: ", supplyChain.target);
+  // Config.setConfig(network + ".SupplyChain", supplyChain.target as string);
 
-  // const MKP = await ethers.getContractFactory("MarketPlace");
-  // const marketplace = await MKP.deploy(
-  //   "0xbff25E68cf50b8dDC6e56Ab36F0B66f6e4820a97",
-  //   "0x766247768d18b02d3496d9A8dC1f2838A55146BC"
-  // );
-  // console.log("MarketPlace address: ", marketplace.target);
-  // Config.setConfig(network + ".MarketPlace", marketplace.target as string);
+  const MKP = await ethers.getContractFactory("MarketPlace");
+  const marketplace = await MKP.deploy(
+    "0xbff25E68cf50b8dDC6e56Ab36F0B66f6e4820a97",
+    "0x9760914083641A1A3cD4E55c7817157fE17B8385"
+  );
+  console.log("MarketPlace address: ", marketplace.target);
+  Config.setConfig(network + ".MarketPlace", marketplace.target as string);
 
   await Config.updateConfig();
 }

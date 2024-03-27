@@ -79,7 +79,6 @@ contract MarketPlace is IERC721Receiver, Ownable {
         );
 
         product.safeTransferFrom(msg.sender, address(this), _productId);
-        product.addTransitHistory(_productId, msg.sender);
         emit ListProduct(msg.sender, _productId, _price);
     }
 
@@ -136,6 +135,7 @@ contract MarketPlace is IERC721Receiver, Ownable {
         );
 
         product.safeTransferFrom(address(this), msg.sender, _productId);
+        product.addTransitHistory(_productId, msg.sender);
         emit BuyProduct(
             msg.sender,
             _productId,
