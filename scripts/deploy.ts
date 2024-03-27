@@ -1,3 +1,4 @@
+import { ProductTransaction } from "./../typechain-types/contracts/ProductTransaction";
 import { ethers, hardhatArguments } from "hardhat";
 import * as Config from "./config";
 
@@ -26,13 +27,25 @@ async function main() {
   // console.log("SupplyChain address: ", supplyChain.target);
   // Config.setConfig(network + ".SupplyChain", supplyChain.target as string);
 
-  const MKP = await ethers.getContractFactory("MarketPlace");
-  const marketplace = await MKP.deploy(
-    "0xbff25E68cf50b8dDC6e56Ab36F0B66f6e4820a97",
+  // const MKP = await ethers.getContractFactory("MarketPlace");
+  // const marketplace = await MKP.deploy(
+  //   "0xbff25E68cf50b8dDC6e56Ab36F0B66f6e4820a97",
+  //   "0x9760914083641A1A3cD4E55c7817157fE17B8385"
+  // );
+  // console.log("MarketPlace address: ", marketplace.target);
+  // Config.setConfig(network + ".MarketPlace", marketplace.target as string);
+
+  const ProductTransaction = await ethers.getContractFactory(
+    "ProductTransaction"
+  );
+  const productTransaction = await ProductTransaction.deploy(
     "0x9760914083641A1A3cD4E55c7817157fE17B8385"
   );
-  console.log("MarketPlace address: ", marketplace.target);
-  Config.setConfig(network + ".MarketPlace", marketplace.target as string);
+  console.log("ProductTransaction address: ", productTransaction.target);
+  Config.setConfig(
+    network + ".ProductTransaction",
+    productTransaction.target as string
+  );
 
   await Config.updateConfig();
 }
