@@ -7,7 +7,7 @@ import "./SupplyChain.sol";
 
 // import "@openzeppelin/contracts/utils/Address.sol";
 
-contract ProductTransaction is IERC721Receiver, Ownable {
+contract ExchangeProduct is IERC721Receiver, Ownable {
     SupplyChain public product;
     uint private _tradeTracker = 0;
 
@@ -153,7 +153,7 @@ contract ProductTransaction is IERC721Receiver, Ownable {
         );
     }
 
-    function getTrade(
+    function getTradeById(
         uint256 id
     ) external view tradeExists(id) returns (Transaction memory) {
         return trades[id];
@@ -161,12 +161,12 @@ contract ProductTransaction is IERC721Receiver, Ownable {
 
     function getTradeBySender(
         address _sender
-    ) external view returns (Transaction[] memory) {
-        Transaction[] memory senderTrades = new Transaction[](_tradeTracker);
+    ) external view returns (uint256[] memory) {
+        uint256[] memory senderTrades = new uint256[](_tradeTracker);
         uint256 count = 0;
         for (uint256 i = 0; i < _tradeTracker; i++) {
             if (trades[i].sender == _sender && trades[i].active) {
-                senderTrades[count] = trades[i];
+                senderTrades[count] = i;
                 count++;
             }
         }
@@ -175,12 +175,12 @@ contract ProductTransaction is IERC721Receiver, Ownable {
 
     function getTradeByReceiver(
         address _sender
-    ) external view returns (Transaction[] memory) {
-        Transaction[] memory receiverTrades = new Transaction[](_tradeTracker);
+    ) external view returns (uint256[] memory) {
+        uint256[] memory receiverTrades = new uint256[](_tradeTracker);
         uint256 count = 0;
         for (uint256 i = 0; i < _tradeTracker; i++) {
             if (trades[i].receiver == _sender && trades[i].active) {
-                receiverTrades[count] = trades[i];
+                receiverTrades[count] = i;
                 count++;
             }
         }

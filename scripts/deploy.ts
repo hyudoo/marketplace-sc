@@ -35,16 +35,14 @@ async function main() {
   // console.log("MarketPlace address: ", marketplace.target);
   // Config.setConfig(network + ".MarketPlace", marketplace.target as string);
 
-  const ProductTransaction = await ethers.getContractFactory(
-    "ProductTransaction"
-  );
-  const productTransaction = await ProductTransaction.deploy(
+  const ExchangeProduct = await ethers.getContractFactory("ExchangeProduct");
+  const exchangeProduct = await ExchangeProduct.deploy(
     "0x9760914083641A1A3cD4E55c7817157fE17B8385"
   );
-  console.log("ProductTransaction address: ", productTransaction.target);
+  console.log("ExchangeProduct address: ", exchangeProduct.target);
   Config.setConfig(
-    network + ".ProductTransaction",
-    productTransaction.target as string
+    network + ".ExchangeProduct",
+    exchangeProduct.target as string
   );
 
   await Config.updateConfig();
