@@ -8,11 +8,7 @@ import "@openzeppelin/contracts/access/extensions/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 interface ISupplyChain {
-    function mint(
-        address to,
-        string memory cid,
-        string memory productType
-    ) external returns (uint256);
+    function mint(address to, string memory cid) external returns (uint256);
 }
 
 contract SupplyChain is
@@ -21,18 +17,13 @@ contract SupplyChain is
     AccessControlEnumerable,
     ISupplyChain
 {
-    // declare variables to store product data and delivery data
     uint private _productIdTracker = 0;
     string private _url;
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
-    event Mint(address _to, string _productType, uint256 _tokenid);
+    event Mint(address _to, uint256 _tokenid);
 
-    struct ProductData {
-        string cid;
-    }
-    // declare mapping to store product data and delivery data
-    mapping(uint256 => ProductData) private productData;
+    mapping(uint256 => string) private cidProduct;
     mapping(uint256 => address[]) private transitHistory;
 
     constructor() ERC721("SupplyChain", "SCN") Ownable(msg.sender) {
@@ -42,8 +33,7 @@ contract SupplyChain is
 
     function mint(
         address to,
-        string memory cid,
-        string memory productType
+        string memory cid
     ) external override returns (uint256) {
         require(
             owner() == _msgSender() || hasRole(MINTER_ROLE, _msgSender()),
@@ -51,24 +41,24 @@ contract SupplyChain is
         );
         _productIdTracker += 1;
         uint256 productId = _productIdTracker;
-        transitHistory[productId].push(to);
-        productData[productId] = ProductData(cid);
+        transitHistory[_productIdTracker].push(to);
+        cidProduct[productId] = cid;
         _mint(to, productId);
-        emit Mint(to, productType, productId);
+        emit Mint(to, productId);
         return productId;
     }
 
     function getCID(uint256 productId) external view returns (string memory) {
-        return productData[productId].cid;
+        return cidProduct[productId];
     }
 
-    function setCID(uint256 productId, string memory cid) external {
+    function setCID(uint256 productId, string memory _cid) external {
         require(
             ownerOf(productId) == _msgSender() ||
                 hasRole(MINTER_ROLE, _msgSender()),
             "SupplyChain: must have MINTER_ROLE role to create"
         );
-        productData[productId].cid = cid;
+        cidProduct[productId] = _cid;
     }
 
     function listProductIds(
@@ -99,10 +89,6 @@ contract SupplyChain is
         transitHistory[productId].push(to);
     }
 
-    function hasMinterRole(address _user) public view returns (bool) {
-        return hasRole(MINTER_ROLE, _user);
-    }
-
     function _baseURI()
         internal
         view
@@ -119,7 +105,7 @@ contract SupplyChain is
     function getProductURI(
         uint256 productId
     ) external view returns (string memory) {
-        return string(abi.encodePacked(_baseURI(), productData[productId].cid));
+        return string(abi.encodePacked(_baseURI(), cidProduct[productId]));
     }
 
     function supportsInterface(
@@ -131,13 +117,5 @@ contract SupplyChain is
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
-    }
-
-    function addMinter(address minter) external onlyOwner {
-        grantRole(MINTER_ROLE, minter);
-    }
-
-    function removeMinter(address minter) external onlyOwner {
-        revokeRole(MINTER_ROLE, minter);
     }
 }
