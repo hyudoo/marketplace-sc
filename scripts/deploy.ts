@@ -27,23 +27,23 @@ async function main() {
   // console.log("CrowdSale address: ", crowdSale.target);
   // Config.setConfig(network + ".CrowdSale", crowdSale.target as string);
 
-  const MKP = await ethers.getContractFactory("MarketPlace");
-  const marketplace = await MKP.deploy(
-    "0x647c94dc172411077d0e0c907315674dE3C44680",
-    "0xafa048370623EFCb50c4F94Dc3e53BfbB1bcBCA2"
-  );
-  console.log("MarketPlace address: ", marketplace.target);
-  Config.setConfig(network + ".MarketPlace", marketplace.target as string);
-
-  // const ExchangeProduct = await ethers.getContractFactory("ExchangeProduct");
-  // const exchangeProduct = await ExchangeProduct.deploy(
+  // const MKP = await ethers.getContractFactory("MarketPlace");
+  // const marketplace = await MKP.deploy(
+  //   "0x647c94dc172411077d0e0c907315674dE3C44680",
   //   "0xafa048370623EFCb50c4F94Dc3e53BfbB1bcBCA2"
   // );
-  // console.log("ExchangeProduct address: ", exchangeProduct.target);
-  // Config.setConfig(
-  //   network + ".ExchangeProduct",
-  //   exchangeProduct.target as string
-  // );
+  // console.log("MarketPlace address: ", marketplace.target);
+  // Config.setConfig(network + ".MarketPlace", marketplace.target as string);
+
+  const ExchangeProduct = await ethers.getContractFactory("ExchangeProduct");
+  const exchangeProduct = await ExchangeProduct.deploy(
+    "0xafa048370623EFCb50c4F94Dc3e53BfbB1bcBCA2"
+  );
+  console.log("ExchangeProduct address: ", exchangeProduct.target);
+  Config.setConfig(
+    network + ".ExchangeProduct",
+    exchangeProduct.target as string
+  );
 
   await Config.updateConfig();
 }
