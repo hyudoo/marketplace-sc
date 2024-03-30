@@ -21,7 +21,7 @@ contract ExchangeProduct is IERC721Receiver, Ownable {
         product = _product;
     }
 
-    function setProductContract(SupplyChain _product) external onlyOwner {
+    function setProduct(SupplyChain _product) external onlyOwner {
         product = _product;
     }
 
@@ -38,6 +38,7 @@ contract ExchangeProduct is IERC721Receiver, Ownable {
         address indexed sender,
         address indexed receiver
     );
+
     event TransactionSuccessful(
         address indexed sender,
         address indexed receiver,
@@ -97,7 +98,7 @@ contract ExchangeProduct is IERC721Receiver, Ownable {
     function cancelTransaction(uint256 _tradeId) public tradeExists(_tradeId) {
         Transaction storage trade = trades[_tradeId];
         require(
-            trade.sender == msg.sender || msg.sender == trade.receiver,
+            msg.sender == trade.sender || msg.sender == trade.receiver,
             "You are not a person of this trade"
         );
         for (uint256 i = 0; i < trade.senderTokenIds.length; i++) {
@@ -136,7 +137,7 @@ contract ExchangeProduct is IERC721Receiver, Ownable {
         for (uint256 i = 0; i < trade.senderTokenIds.length; i++) {
             product.safeTransferFrom(
                 address(this),
-                payable(trade.receiver),
+                trade.receiver,
                 trade.senderTokenIds[i]
             );
             product.addTransitHistory(trade.senderTokenIds[i], trade.receiver);
@@ -144,7 +145,7 @@ contract ExchangeProduct is IERC721Receiver, Ownable {
         for (uint256 i = 0; i < trade.receiverTokenIds.length; i++) {
             product.safeTransferFrom(
                 msg.sender,
-                payable(trade.sender),
+                trade.sender,
                 trade.receiverTokenIds[i]
             );
             product.addTransitHistory(trade.receiverTokenIds[i], trade.sender);
@@ -165,12 +166,32 @@ contract ExchangeProduct is IERC721Receiver, Ownable {
         return trades[_tradeId];
     }
 
-    function getTrades() public view returns (Transaction[] memory) {
-        Transaction[] memory _trades = new Transaction[](_tradeTracker);
-        for (uint256 i = 0; i < _tradeTracker; i++) {
-            _trades[i] = trades[i + 1];
+    function getTradeBySender(
+        address _sender
+    ) external view returns (uint256[] memory) {
+        uint256[] memory senderTrades = new uint256[](_tradeTracker);
+        uint256 count = 0;
+        for (uint256 i = 1; i <= _tradeTracker; i++) {
+            if (trades[i].sender == _sender && trades[i].active) {
+                senderTrades[count] = i;
+                count++;
+            }
         }
-        return _trades;
+        return senderTrades;
+    }
+
+    function getTradeByReceiver(
+        address _sender
+    ) external view returns (uint256[] memory) {
+        uint256[] memory receiverTrades = new uint256[](_tradeTracker);
+        uint256 count = 0;
+        for (uint256 i = 1; i <= _tradeTracker; i++) {
+            if (trades[i].receiver == _sender && trades[i].active) {
+                receiverTrades[count] = i;
+                count++;
+            }
+        }
+        return receiverTrades;
     }
 
     modifier tradeExists(uint256 _tradeId) {

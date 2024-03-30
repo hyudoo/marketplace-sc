@@ -1,11 +1,12 @@
 {
   "dev": {},
   "bsctest": {
-    "MarketCoins": "0xf707EA5293ECD90Fc5507fE1106602D51b4EAE97",
-    "SupplyChain": "0x75e446a568f08549509F93701Aa84Dd5047EE6C5",
-    "CrowdSale": "0x825b23CA4EC78fBbBab4993BF0caBf8c6EfeF0bf",
-    "MarketPlace": "0x482906077AfCD3F8ea7299d72994FD96053edAB7",
-    "ExchangeProduct": "0x8550a18b1635C11F898B9414123b8593d92643C8"
+    "MarketCoins": "0x647c94dc172411077d0e0c907315674dE3C44680",
+    "SupplyChain": "0xafa048370623EFCb50c4F94Dc3e53BfbB1bcBCA2",
+    "CrowdSale": "0x7fE6d0BE4e8309E8C4b851Bd84E12fc564a29c37",
+    "MarketPlace": "0x9b329EB44EB4505f888d4e748f87a0A5dEDe46DF"
+    // "ExchangeProduct": "0xD9aC8C259698993b241B480e8dDb5A7876494459"
   },
   "main": {}
 }
+// "ExchangeProduct": "0xD9aC8C259698993b241B480e8dDb5A7876494459"
