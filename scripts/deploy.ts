@@ -1,4 +1,3 @@
-import { ProductTransaction } from "./../typechain-types/contracts/ProductTransaction";
 import { ethers, hardhatArguments } from "hardhat";
 import * as Config from "./config";
 
@@ -13,10 +12,10 @@ async function main() {
   // console.log("MarketCoins address: ", marketcoins.target);
   // Config.setConfig(network + ".MarketCoins", marketcoins.target as string);
 
-  // const SupplyChain = await ethers.getContractFactory("SupplyChain");
-  // const supplyChain = await SupplyChain.deploy();
-  // console.log("SupplyChain address: ", supplyChain.target);
-  // Config.setConfig(network + ".SupplyChain", supplyChain.target as string);
+  const SupplyChain = await ethers.getContractFactory("SupplyChain");
+  const supplyChain = await SupplyChain.deploy();
+  console.log("SupplyChain address: ", supplyChain.target);
+  Config.setConfig(network + ".SupplyChain", supplyChain.target as string);
 
   // const CrowdSale = await ethers.getContractFactory("CrowdSale");
   // const crowdSale = await CrowdSale.deploy(
@@ -35,15 +34,15 @@ async function main() {
   // console.log("MarketPlace address: ", marketplace.target);
   // Config.setConfig(network + ".MarketPlace", marketplace.target as string);
 
-  const ExchangeProduct = await ethers.getContractFactory("ExchangeProduct");
-  const exchangeProduct = await ExchangeProduct.deploy(
-    "0xafa048370623EFCb50c4F94Dc3e53BfbB1bcBCA2"
-  );
-  console.log("ExchangeProduct address: ", exchangeProduct.target);
-  Config.setConfig(
-    network + ".ExchangeProduct",
-    exchangeProduct.target as string
-  );
+  // const ExchangeProduct = await ethers.getContractFactory("ExchangeProduct");
+  // const exchangeProduct = await ExchangeProduct.deploy(
+  //   "0xafa048370623EFCb50c4F94Dc3e53BfbB1bcBCA2"
+  // );
+  // console.log("ExchangeProduct address: ", exchangeProduct.target);
+  // Config.setConfig(
+  //   network + ".ExchangeProduct",
+  //   exchangeProduct.target as string
+  // );
 
   await Config.updateConfig();
 }

@@ -118,4 +118,16 @@ contract SupplyChain is
     {
         return super.supportsInterface(interfaceId);
     }
+
+    function hasMinterRole(address _user) public view returns (bool) {
+        return hasRole(MINTER_ROLE, _user);
+    }
+
+    function addMinter(address minter) external onlyOwner {
+        grantRole(MINTER_ROLE, minter);
+    }
+
+    function removeMinter(address minter) external onlyOwner {
+        revokeRole(MINTER_ROLE, minter);
+    }
 }
