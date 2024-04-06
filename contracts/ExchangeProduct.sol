@@ -7,7 +7,6 @@ import "./SupplyChain.sol";
 
 contract ExchangeProduct is IERC721Receiver, Ownable {
     SupplyChain public product;
-    uint private _tradeTracker = 0;
 
     struct Transaction {
         address sender;
@@ -25,7 +24,7 @@ contract ExchangeProduct is IERC721Receiver, Ownable {
         product = _product;
     }
 
-    mapping(uint256 => Transaction) public trades;
+    Transaction[] private trades;
 
     event TransactionCreated(
         address indexed sender,
@@ -78,8 +77,7 @@ contract ExchangeProduct is IERC721Receiver, Ownable {
                 _senderTokenIds[i]
             );
         }
-        _tradeTracker = _tradeTracker + 1;
-        trades[_tradeTracker] = Transaction({
+        trades[trades.length] = Transaction({
             sender: msg.sender,
             receiver: _receiver,
             senderTokenIds: _senderTokenIds,
@@ -96,7 +94,7 @@ contract ExchangeProduct is IERC721Receiver, Ownable {
     }
 
     function cancelTransaction(uint256 _tradeId) public tradeExists(_tradeId) {
-        Transaction storage trade = trades[_tradeId];
+        Transaction memory trade = trades[_tradeId];
         require(
             msg.sender == trade.sender || msg.sender == trade.receiver,
             "You are not a person of this trade"
@@ -114,7 +112,7 @@ contract ExchangeProduct is IERC721Receiver, Ownable {
     }
 
     function acceptTransaction(uint256 _tradeId) public tradeExists(_tradeId) {
-        Transaction storage trade = trades[_tradeId];
+        Transaction memory trade = trades[_tradeId];
         require(trade.receiver == msg.sender, "Only receiver can accept trade");
         for (uint256 i = 0; i < trade.receiverTokenIds.length; i++) {
             require(
@@ -169,9 +167,16 @@ contract ExchangeProduct is IERC721Receiver, Ownable {
     function getTradeBySender(
         address _sender
     ) external view returns (uint256[] memory) {
-        uint256[] memory senderTrades = new uint256[](_tradeTracker);
+        uint256 length = 0;
+        for (uint256 i = 1; i <= trades.length; i++) {
+            if (trades[i].sender == _sender && trades[i].active) {
+                length++;
+            }
+        }
+
+        uint256[] memory senderTrades = new uint256[](length);
         uint256 count = 0;
-        for (uint256 i = 1; i <= _tradeTracker; i++) {
+        for (uint256 i = 1; i <= trades.length; i++) {
             if (trades[i].sender == _sender && trades[i].active) {
                 senderTrades[count] = i;
                 count++;
@@ -183,9 +188,16 @@ contract ExchangeProduct is IERC721Receiver, Ownable {
     function getTradeByReceiver(
         address _sender
     ) external view returns (uint256[] memory) {
-        uint256[] memory receiverTrades = new uint256[](_tradeTracker);
+        uint256 length = 0;
+        for (uint256 i = 1; i <= trades.length; i++) {
+            if (trades[i].receiver == _sender && trades[i].active) {
+                length++;
+            }
+        }
+
+        uint256[] memory receiverTrades = new uint256[](length);
         uint256 count = 0;
-        for (uint256 i = 1; i <= _tradeTracker; i++) {
+        for (uint256 i = 1; i <= trades.length; i++) {
             if (trades[i].receiver == _sender && trades[i].active) {
                 receiverTrades[count] = i;
                 count++;
