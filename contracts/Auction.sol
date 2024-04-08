@@ -9,15 +9,13 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./SupplyChain.sol";
 
 contract Auction is IERC721Receiver, Ownable {
+    using SafeERC20 for IERC20;
     SupplyChain private product;
     IERC20 private token;
 
     uint public constant AUCTION_SERVICE_FEE_RATE = 5; // Percentage
 
     uint public constant MINIMUM_BID_RATE = 110; // Percentage
-
-    event SetToken(IERC20 _token);
-    event SetProduct(SupplyChain _product);
 
     constructor(IERC20 _token, SupplyChain _product) Ownable(msg.sender) {
         token = _token;
@@ -38,16 +36,39 @@ contract Auction is IERC721Receiver, Ownable {
 
     struct AuctionInfo {
         address author;
-        uint256 _productId;
         uint256 initialPrice;
         address previousBidder;
         uint256 lastBid;
         address lastBidder;
         uint256 startTime;
         uint256 endTime;
-        bool completed;
-        uint256 auctionId;
     }
+
+    event AuctionCreated(
+        address indexed author,
+        uint256 indexed _productId,
+        uint256 initialPrice,
+        uint256 startTime,
+        uint256 endTime
+    );
+
+    event AuctionJoined(
+        address indexed author,
+        uint256 indexed _productId,
+        uint256 lastBid,
+        address lastBidder
+    );
+
+    event AuctionFinished(
+        address indexed author,
+        uint256 indexed _productId,
+        uint256 lastBid,
+        address lastBidder
+    );
+
+    event AuctionCanceled(address indexed author, uint256 indexed _productId);
+    event SetToken(IERC20 _token);
+    event SetProduct(SupplyChain _product);
 
     AuctionInfo[] private auction;
 
@@ -72,24 +93,26 @@ contract Auction is IERC721Receiver, Ownable {
 
         product.safeTransferFrom(msg.sender, address(this), _productId);
 
-        AuctionInfo memory _auction = AuctionInfo(
+        auction[_productId] = AuctionInfo(
             msg.sender,
-            _productId,
             _initialPrice,
             address(0),
             _initialPrice,
             address(0),
             _startTime,
-            _endTime,
-            false,
-            auction.length
+            _endTime
         );
-
-        auction.push(_auction);
+        emit AuctionCreated(
+            msg.sender,
+            _productId,
+            _initialPrice,
+            _startTime,
+            _endTime
+        );
     }
 
-    function joinAuction(uint256 _auctionId, uint256 _bid) public {
-        AuctionInfo memory _auction = auction[_auctionId];
+    function joinAuction(uint256 _productId, uint256 _bid) public {
+        AuctionInfo memory _auction = auction[_productId];
 
         require(
             block.timestamp >= _auction.startTime,
@@ -99,14 +122,13 @@ contract Auction is IERC721Receiver, Ownable {
             _auction.lastBidder != msg.sender,
             "You have already bid on this auction"
         );
-        require(_auction.completed == false, "Auction is already completed");
 
         uint256 _minBid = _auction.lastBidder == address(0)
             ? _auction.initialPrice
             : (_auction.lastBid * MINIMUM_BID_RATE) / 100;
 
         require(
-            _minBid <= _bid,
+            _bid >= _minBid,
             "Bid price must be greater than the minimum price"
         );
 
@@ -122,86 +144,84 @@ contract Auction is IERC721Receiver, Ownable {
             token.transfer(_auction.lastBidder, _auction.lastBid);
         }
 
-        auction[_auctionId].previousBidder = _auction.lastBidder;
-        auction[_auctionId].lastBidder = msg.sender;
-        auction[_auctionId].lastBid = _bid;
+        auction[_productId].previousBidder = _auction.lastBidder;
+        auction[_productId].lastBidder = msg.sender;
+        auction[_productId].lastBid = _bid;
+
+        emit AuctionJoined(_auction.author, _productId, _bid, msg.sender);
     }
 
     function finishAuction(
-        uint256 _auctionId
-    ) public onlyAuctioneer(_auctionId) {
-        require(
-            auction[_auctionId].completed == false,
-            "Auction is already completed"
-        );
+        uint256 _productId
+    ) public onlyAuctioneer(_productId) {
+        AuctionInfo memory _auction = auction[_productId];
 
         product.safeTransferFrom(
             address(this),
-            auction[_auctionId].lastBidder,
-            auction[_auctionId]._productId
+            _auction.lastBidder,
+            _productId
         );
 
-        uint256 lastBid = auction[_auctionId].lastBid;
-        uint256 profit = auction[_auctionId].lastBid -
-            auction[_auctionId].initialPrice;
+        uint256 lastBid = _auction.lastBid;
+        uint256 profit = _auction.lastBid - _auction.initialPrice;
 
         uint256 auctionServiceFee = (profit * AUCTION_SERVICE_FEE_RATE) / 100;
 
         uint256 auctioneerReceive = lastBid - auctionServiceFee;
 
-        token.transfer(auction[_auctionId].author, auctioneerReceive);
-
-        auction[_auctionId].completed = true;
+        token.transfer(_auction.author, auctioneerReceive);
+        product.addTransitHistory(_productId, _auction.lastBidder);
+        emit AuctionFinished(
+            _auction.author,
+            _productId,
+            lastBid,
+            _auction.lastBidder
+        );
     }
 
     function cancelAuction(
-        uint256 _auctionId
-    ) public onlyAuctioneer(_auctionId) {
-        require(
-            auction[_auctionId].completed == false,
-            "Auction is already completed"
-        );
-
+        uint256 _productId
+    ) public onlyAuctioneer(_productId) {
         product.safeTransferFrom(
             address(this),
-            auction[_auctionId].author,
-            auction[_auctionId]._productId
+            auction[_productId].author,
+            _productId
         );
 
-        if (auction[_auctionId].lastBidder != address(0)) {
+        if (auction[_productId].lastBidder != address(0)) {
             token.transfer(
-                auction[_auctionId].lastBidder,
-                auction[_auctionId].lastBid
+                auction[_productId].lastBidder,
+                auction[_productId].lastBid
             );
         }
-        auction[_auctionId].completed = true;
+
+        emit AuctionCanceled(auction[_productId].author, _productId);
     }
 
     function getAuction(
-        uint256 _auctionId
+        uint256 _productId
     ) public view returns (AuctionInfo memory) {
-        return auction[_auctionId];
+        return auction[_productId];
     }
 
-    function getAuctionByStatus(
-        bool _isCompleted
-    ) public view returns (AuctionInfo[] memory) {
-        uint length = 0;
-        for (uint i = 0; i < auction.length; i++) {
-            if (auction[i].completed == _isCompleted) {
-                length++;
-            }
-        }
+    function getListedProducts() public view returns (AuctionInfo[] memory) {
+        uint balance = product.balanceOf(address(this));
+        AuctionInfo[] memory myProduct = new AuctionInfo[](balance);
 
-        AuctionInfo[] memory results = new AuctionInfo[](length);
-        uint j = 0;
-        for (uint256 index = 0; index < auction.length; index++) {
-            if (auction[index].completed == _isCompleted) {
-                results[j] = auction[index];
-                j++;
-            }
+        for (uint i = 0; i < balance; i++) {
+            myProduct[i] = auction[
+                product.tokenOfOwnerByIndex(address(this), i)
+            ];
         }
-        return results;
+        return myProduct;
+    }
+
+    modifier onlyAuctioneer(uint256 _productId) {
+        require(
+            (msg.sender == auction[_productId].author || msg.sender == owner()),
+            "Only auctioneer or owner can perform this action"
+        );
+        _;
     }
 
     function setToken(IERC20 _token) public onlyOwner {
@@ -214,11 +234,19 @@ contract Auction is IERC721Receiver, Ownable {
         emit SetProduct(_product);
     }
 
-    modifier onlyAuctioneer(uint256 _auctionId) {
+    function withdraw() public onlyOwner {
+        payable(msg.sender).transfer(address(this).balance);
+    }
+
+    function withdrawToken(uint256 amount) public onlyOwner {
         require(
-            (msg.sender == auction[_auctionId].author || msg.sender == owner()),
-            "Only auctioneer or owner can perform this action"
+            token.balanceOf(address(this)) >= amount,
+            "Insufficient account balance"
         );
-        _;
+        token.transfer(msg.sender, amount);
+    }
+
+    function withdrawErc20() public onlyOwner {
+        token.transfer(msg.sender, token.balanceOf(address(this)));
     }
 }

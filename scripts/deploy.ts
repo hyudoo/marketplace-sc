@@ -12,10 +12,10 @@ async function main() {
   // console.log("MarketCoins address: ", marketcoins.target);
   // Config.setConfig(network + ".MarketCoins", marketcoins.target as string);
 
-  const SupplyChain = await ethers.getContractFactory("SupplyChain");
-  const supplyChain = await SupplyChain.deploy();
-  console.log("SupplyChain address: ", supplyChain.target);
-  Config.setConfig(network + ".SupplyChain", supplyChain.target as string);
+  // const SupplyChain = await ethers.getContractFactory("SupplyChain");
+  // const supplyChain = await SupplyChain.deploy();
+  // console.log("SupplyChain address: ", supplyChain.target);
+  // Config.setConfig(network + ".SupplyChain", supplyChain.target as string);
 
   // const CrowdSale = await ethers.getContractFactory("CrowdSale");
   // const crowdSale = await CrowdSale.deploy(
