@@ -44,6 +44,14 @@ async function main() {
   //   exchangeProduct.target as string
   // );
 
+  const Auction = await ethers.getContractFactory("Auction");
+  const auction = await Auction.deploy(
+    "0x647c94dc172411077d0e0c907315674dE3C44680",
+    "0x0365742D26652EEF1b7A23B6b4c7990a5A842B97"
+  );
+  console.log("Auction address: ", auction.target);
+  Config.setConfig(network + ".Auction", auction.target as string);
+
   await Config.updateConfig();
 }
 

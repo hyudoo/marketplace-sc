@@ -16,6 +16,9 @@ contract Auction is IERC721Receiver, Ownable {
 
     uint public constant MINIMUM_BID_RATE = 110; // Percentage
 
+    event SetToken(IERC20 _token);
+    event SetProduct(SupplyChain _product);
+
     constructor(IERC20 _token, SupplyChain _product) Ownable(msg.sender) {
         token = _token;
         product = _product;
@@ -199,6 +202,16 @@ contract Auction is IERC721Receiver, Ownable {
             }
         }
         return results;
+    }
+
+    function setToken(IERC20 _token) public onlyOwner {
+        token = _token;
+        emit SetToken(_token);
+    }
+
+    function setProduct(SupplyChain _product) public onlyOwner {
+        product = _product;
+        emit SetProduct(_product);
     }
 
     modifier onlyAuctioneer(uint256 _auctionId) {

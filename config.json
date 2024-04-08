@@ -2,10 +2,11 @@
   "dev": {},
   "bsctest": {
     "MarketCoins": "0x647c94dc172411077d0e0c907315674dE3C44680",
-    "SupplyChain": "0x0365742D26652EEF1b7A23B6b4c7990a5A842B97",
+    "SupplyChain": "0x8B243B73Fd4B427E4543cfDEC64Ef1fe2e98d9CA",
     "CrowdSale": "0x7fE6d0BE4e8309E8C4b851Bd84E12fc564a29c37",
     "MarketPlace": "0x9b329EB44EB4505f888d4e748f87a0A5dEDe46DF",
-    "ExchangeProduct": "0x6e50111909EF3a9e0Ca9B629DD3B11A42FE26558"
+    "ExchangeProduct": "0x6e50111909EF3a9e0Ca9B629DD3B11A42FE26558",
+    "Auction": "0x99f49e2c084243bf9780fc0DaEFA9cCD1B40491b"
   },
   "main": {}
 }
