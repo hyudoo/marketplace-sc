@@ -37,7 +37,6 @@ contract Auction is IERC721Receiver, Ownable {
     struct AuctionInfo {
         address author;
         uint256 initialPrice;
-        address previousBidder;
         uint256 lastBid;
         address lastBidder;
         uint256 startTime;
@@ -96,7 +95,6 @@ contract Auction is IERC721Receiver, Ownable {
         auction[_productId] = AuctionInfo(
             msg.sender,
             _initialPrice,
-            address(0),
             _initialPrice,
             address(0),
             _startTime,
@@ -144,7 +142,6 @@ contract Auction is IERC721Receiver, Ownable {
             token.transfer(_auction.lastBidder, _auction.lastBid);
         }
 
-        auction[_productId].previousBidder = _auction.lastBidder;
         auction[_productId].lastBidder = msg.sender;
         auction[_productId].lastBid = _bid;
 
