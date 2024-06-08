@@ -6,11 +6,11 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "./SupplyChain.sol";
+import "./Product.sol";
 
 contract MarketPlace is IERC721Receiver, Ownable {
     using SafeERC20 for IERC20;
-    SupplyChain private product;
+    Product private product;
     IERC20 private token;
 
     struct ProductDetail {
@@ -31,15 +31,15 @@ contract MarketPlace is IERC721Receiver, Ownable {
         uint256 _productId,
         uint256 _price
     );
-    event UpdateListingProductPrice(uint256 _productId, uint256 _price);
+    event UpdatePrice(uint256 _productId, uint256 _price);
     event SetToken(IERC20 _token);
-    event SetTax(uint256 _tax);
-    event SetProduct(SupplyChain _product);
+    event SetFeeRate(uint256 _feeRate);
+    event SetProduct(Product _product);
 
-    uint256 private tax = 5; // percentage
+    uint256 private feeRate = 5; // percentage
     mapping(uint256 => ProductDetail) listProductDetail;
 
-    constructor(IERC20 _token, SupplyChain _product) Ownable(msg.sender) {
+    constructor(IERC20 _token, Product _product) Ownable(msg.sender) {
         product = _product;
         token = _token;
     }
@@ -82,10 +82,7 @@ contract MarketPlace is IERC721Receiver, Ownable {
         emit ListProduct(msg.sender, _productId, _price);
     }
 
-    function updateListingProductPrice(
-        uint256 _productId,
-        uint256 _price
-    ) public {
+    function updatePriceProduct(uint256 _productId, uint256 _price) public {
         require(
             product.ownerOf(_productId) == address(this),
             "This Product doesn't exist on marketplace"
@@ -96,7 +93,7 @@ contract MarketPlace is IERC721Receiver, Ownable {
         );
 
         listProductDetail[_productId].price = _price;
-        emit UpdateListingProductPrice(_productId, _price);
+        emit UpdatePrice(_productId, _price);
     }
 
     function unlistProduct(uint256 _productId) public {
@@ -131,7 +128,7 @@ contract MarketPlace is IERC721Receiver, Ownable {
         );
         token.transfer(
             listProductDetail[_productId].author,
-            (listProductDetail[_productId].price * (100 - tax)) / 100
+            (listProductDetail[_productId].price * (100 - feeRate)) / 100
         );
 
         product.safeTransferFrom(address(this), msg.sender, _productId);
@@ -143,9 +140,9 @@ contract MarketPlace is IERC721Receiver, Ownable {
         );
     }
 
-    function setTax(uint256 _tax) public onlyOwner {
-        tax = _tax;
-        emit SetTax(_tax);
+    function setFeeRate(uint256 _feeRate) public onlyOwner {
+        feeRate = _feeRate;
+        emit SetFeeRate(_feeRate);
     }
 
     function setToken(IERC20 _token) public onlyOwner {
@@ -153,7 +150,7 @@ contract MarketPlace is IERC721Receiver, Ownable {
         emit SetToken(_token);
     }
 
-    function setProduct(SupplyChain _product) public onlyOwner {
+    function setProduct(Product _product) public onlyOwner {
         product = _product;
         emit SetProduct(_product);
     }

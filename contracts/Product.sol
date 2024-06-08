@@ -1,22 +1,15 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/utils/Context.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/extensions/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
-interface ISupplyChain {
+interface IProduct {
     function mint(address to, string memory cid) external returns (uint256);
 }
 
-contract SupplyChain is
-    ERC721Enumerable,
-    Ownable,
-    AccessControlEnumerable,
-    ISupplyChain
-{
+contract Product is ERC721Enumerable, AccessControlEnumerable, IProduct {
     uint private _productIdTracker = 0;
     string private _url;
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
@@ -26,9 +19,9 @@ contract SupplyChain is
     mapping(uint256 => string) private cidProduct;
     mapping(uint256 => address[]) private transitHistory;
 
-    constructor() ERC721("SupplyChain", "SCN") Ownable(msg.sender) {
-        _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
-        _grantRole(MINTER_ROLE, _msgSender());
+    constructor() ERC721("Product", "SCN") {
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(MINTER_ROLE, msg.sender);
     }
 
     function mint(
@@ -36,12 +29,13 @@ contract SupplyChain is
         string memory cid
     ) external override returns (uint256) {
         require(
-            owner() == _msgSender() || hasRole(MINTER_ROLE, _msgSender()),
-            "SupplyChain: must have MINTER_ROLE role to create"
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender) ||
+                hasRole(MINTER_ROLE, msg.sender),
+            "Product: must have MINTER_ROLE role to create"
         );
         _productIdTracker += 1;
         uint256 productId = _productIdTracker;
-        transitHistory[_productIdTracker].push(to);
+        transitHistory[productId].push(to);
         cidProduct[productId] = cid;
         _mint(to, productId);
         emit Mint(to, productId);
@@ -54,9 +48,9 @@ contract SupplyChain is
 
     function setCID(uint256 productId, string memory _cid) external {
         require(
-            ownerOf(productId) == _msgSender() ||
-                hasRole(MINTER_ROLE, _msgSender()),
-            "SupplyChain: must have MINTER_ROLE role to create"
+            ownerOf(productId) == msg.sender ||
+                hasRole(MINTER_ROLE, msg.sender),
+            "Product: must have MINTER_ROLE role to create"
         );
         cidProduct[productId] = _cid;
     }
@@ -82,9 +76,9 @@ contract SupplyChain is
 
     function addTransitHistory(uint256 productId, address to) external {
         require(
-            ownerOf(productId) == _msgSender() ||
-                hasRole(MINTER_ROLE, _msgSender()),
-            "SupplyChain: must have MINTER_ROLE role to create"
+            ownerOf(productId) == msg.sender ||
+                hasRole(MINTER_ROLE, msg.sender),
+            "Product: must have MINTER_ROLE role to create"
         );
         transitHistory[productId].push(to);
     }
@@ -98,7 +92,9 @@ contract SupplyChain is
         return _url;
     }
 
-    function setBaseURI(string memory _newBaseURI) external onlyOwner {
+    function setBaseURI(
+        string memory _newBaseURI
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         _url = _newBaseURI;
     }
 
@@ -123,11 +119,13 @@ contract SupplyChain is
         return hasRole(MINTER_ROLE, _user);
     }
 
-    function addMinter(address minter) external onlyOwner {
+    function addMinter(address minter) external onlyRole(DEFAULT_ADMIN_ROLE) {
         grantRole(MINTER_ROLE, minter);
     }
 
-    function removeMinter(address minter) external onlyOwner {
+    function removeMinter(
+        address minter
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         revokeRole(MINTER_ROLE, minter);
     }
 }

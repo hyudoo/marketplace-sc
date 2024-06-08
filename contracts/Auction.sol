@@ -3,21 +3,20 @@ pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./SupplyChain.sol";
+import "./Product.sol";
 
 contract Auction is IERC721Receiver, Ownable {
     using SafeERC20 for IERC20;
-    SupplyChain private product;
+    Product private product;
     IERC20 private token;
 
-    uint public constant AUCTION_SERVICE_FEE_RATE = 5; // Percentage
+    uint public constant FEE_RATE = 5; // Percentage
 
     uint public constant MINIMUM_BID_RATE = 110; // Percentage
 
-    constructor(IERC20 _token, SupplyChain _product) Ownable(msg.sender) {
+    constructor(IERC20 _token, Product _product) Ownable(msg.sender) {
         token = _token;
         product = _product;
     }
@@ -37,6 +36,7 @@ contract Auction is IERC721Receiver, Ownable {
     struct AuctionInfo {
         address author;
         uint256 initialPrice;
+        uint256 productId;
         uint256 lastBid;
         address lastBidder;
         uint256 startTime;
@@ -67,9 +67,9 @@ contract Auction is IERC721Receiver, Ownable {
 
     event AuctionCanceled(address indexed author, uint256 indexed _productId);
     event SetToken(IERC20 _token);
-    event SetProduct(SupplyChain _product);
+    event SetProduct(Product _product);
 
-    AuctionInfo[] private auction;
+    mapping(uint256 => AuctionInfo) auctions;
 
     function createAuction(
         uint256 _productId,
@@ -92,9 +92,10 @@ contract Auction is IERC721Receiver, Ownable {
 
         product.safeTransferFrom(msg.sender, address(this), _productId);
 
-        auction[_productId] = AuctionInfo(
+        auctions[_productId] = AuctionInfo(
             msg.sender,
             _initialPrice,
+            _productId,
             _initialPrice,
             address(0),
             _startTime,
@@ -110,7 +111,7 @@ contract Auction is IERC721Receiver, Ownable {
     }
 
     function joinAuction(uint256 _productId, uint256 _bid) public {
-        AuctionInfo memory _auction = auction[_productId];
+        AuctionInfo memory _auction = auctions[_productId];
 
         require(
             block.timestamp >= _auction.startTime,
@@ -142,8 +143,8 @@ contract Auction is IERC721Receiver, Ownable {
             token.transfer(_auction.lastBidder, _auction.lastBid);
         }
 
-        auction[_productId].lastBidder = msg.sender;
-        auction[_productId].lastBid = _bid;
+        auctions[_productId].lastBidder = msg.sender;
+        auctions[_productId].lastBid = _bid;
 
         emit AuctionJoined(_auction.author, _productId, _bid, msg.sender);
     }
@@ -151,7 +152,7 @@ contract Auction is IERC721Receiver, Ownable {
     function finishAuction(
         uint256 _productId
     ) public onlyAuctioneer(_productId) {
-        AuctionInfo memory _auction = auction[_productId];
+        AuctionInfo memory _auction = auctions[_productId];
 
         product.safeTransferFrom(
             address(this),
@@ -162,7 +163,7 @@ contract Auction is IERC721Receiver, Ownable {
         uint256 lastBid = _auction.lastBid;
         uint256 profit = _auction.lastBid - _auction.initialPrice;
 
-        uint256 auctionServiceFee = (profit * AUCTION_SERVICE_FEE_RATE) / 100;
+        uint256 auctionServiceFee = (profit * FEE_RATE) / 100;
 
         uint256 auctioneerReceive = lastBid - auctionServiceFee;
 
@@ -181,32 +182,32 @@ contract Auction is IERC721Receiver, Ownable {
     ) public onlyAuctioneer(_productId) {
         product.safeTransferFrom(
             address(this),
-            auction[_productId].author,
+            auctions[_productId].author,
             _productId
         );
 
-        if (auction[_productId].lastBidder != address(0)) {
+        if (auctions[_productId].lastBidder != address(0)) {
             token.transfer(
-                auction[_productId].lastBidder,
-                auction[_productId].lastBid
+                auctions[_productId].lastBidder,
+                auctions[_productId].lastBid
             );
         }
 
-        emit AuctionCanceled(auction[_productId].author, _productId);
+        emit AuctionCanceled(auctions[_productId].author, _productId);
     }
 
-    function getAuction(
+    function getAuctionById(
         uint256 _productId
     ) public view returns (AuctionInfo memory) {
-        return auction[_productId];
+        return auctions[_productId];
     }
 
-    function getListedProducts() public view returns (AuctionInfo[] memory) {
+    function getAuctions() public view returns (AuctionInfo[] memory) {
         uint balance = product.balanceOf(address(this));
         AuctionInfo[] memory myProduct = new AuctionInfo[](balance);
 
         for (uint i = 0; i < balance; i++) {
-            myProduct[i] = auction[
+            myProduct[i] = auctions[
                 product.tokenOfOwnerByIndex(address(this), i)
             ];
         }
@@ -215,7 +216,8 @@ contract Auction is IERC721Receiver, Ownable {
 
     modifier onlyAuctioneer(uint256 _productId) {
         require(
-            (msg.sender == auction[_productId].author || msg.sender == owner()),
+            (msg.sender == auctions[_productId].author ||
+                msg.sender == owner()),
             "Only auctioneer or owner can perform this action"
         );
         _;
@@ -226,7 +228,7 @@ contract Auction is IERC721Receiver, Ownable {
         emit SetToken(_token);
     }
 
-    function setProduct(SupplyChain _product) public onlyOwner {
+    function setProduct(Product _product) public onlyOwner {
         product = _product;
         emit SetProduct(_product);
     }

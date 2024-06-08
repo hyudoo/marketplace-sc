@@ -17,11 +17,11 @@ contract CrowdSale is Ownable {
     constructor(
         uint256 bnb_rate,
         address payable wallet,
-        IERC20 icotoken
+        IERC20 mkctoken
     ) Ownable(msg.sender) {
         BNB_rate = bnb_rate;
         _wallet = wallet;
-        token = icotoken;
+        token = mkctoken;
     }
 
     function setBNBRate(uint256 new_rate) public onlyOwner {
